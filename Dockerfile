@@ -26,9 +26,9 @@ ENV PORT=8080 \
     DB_PORT=3306 \
     DB_NAME=resolveit_db \
     DB_USERNAME=root \
-    DB_PASSWORD=""
+    JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
 
 USER resolveit
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

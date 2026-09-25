@@ -1,0 +1,14 @@
+.git
+.gitignore
+.idea
+*.iml
+.vscode
+target/
+logs/
+*.log
+src/main/resources/application-local.properties
+src/main/resources/application-local.yml
+src/main/resources/application-local.yaml
+.env
+.DS_Store
+Thumbs.db

@@ -90,17 +90,21 @@ ResolveIT enforces strict, sensible status transitions to ensure procedural inte
 - Maven 3.9+
 - MySQL Server 8.0+ or Docker Desktop
 
-### 1. Database Configuration
+### 1. Database & Environment Configuration
 
-ResolveIT supports standard environment variables for database connectivity. No sensitive production secrets are stored in Git.
+ResolveIT supports standard environment variables for database connectivity and cloud hosting. No sensitive production secrets are stored in Git.
 
-| Environment Variable | Description | Default Development Value |
-| :--- | :--- | :--- |
-| `DB_HOST` | Database Host | `localhost` |
-| `DB_PORT` | Database Port | `3306` |
-| `DB_NAME` | Database Name | `resolveit_db` |
-| `DB_USERNAME` | Database Username | `root` |
-| `DB_PASSWORD` | Database Password | *(empty / provided via env)* |
+| Environment Variable | Description | Default Local Value | Cloud / Render Value |
+| :--- | :--- | :--- | :--- |
+| `PORT` | Web Server HTTP Port | `8080` | Assigned by Render (e.g. `10000`) |
+| `DB_HOST` | Database Hostname / IP | `localhost` | External MySQL host (e.g. cloud provider) |
+| `DB_PORT` | Database Port | `3306` | External MySQL port (e.g. `3306` or provider port) |
+| `DB_NAME` | Database Name | `resolveit_db` | Database name on MySQL host |
+| `DB_USERNAME` | Database Username | `root` | Database user account |
+| `DB_PASSWORD` | Database Password | *(empty / provided via env)* | Secret database password |
+| `DB_SSL_MODE` | Enable SSL for DB connection | `false` | `true` or `REQUIRED` (recommended for cloud DB) |
+| `DB_URL` | *(Optional)* Full JDBC URL override | *(none)* | `jdbc:mysql://<host>:<port>/<name>?...` |
+| `JAVA_OPTS` | JVM Memory & GC flags | *(container tuned)* | `-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0` |
 
 *For local developer convenience, an uncommitted `src/main/resources/application-local.properties` file (listed in `.gitignore`) can be used to specify local credentials.*
 
@@ -125,13 +129,106 @@ mvn clean package -DskipTests=false
 java -jar target/resolveit-1.0.0.jar
 ```
 
-### 4. Running with Docker Compose
+### 4. Running with Docker Compose (Local Stack)
 
-To spin up both MySQL and ResolveIT in isolated containers:
+To spin up both MySQL and ResolveIT in isolated local containers:
 
 ```bash
 docker compose up --build
 ```
+
+### 5. Building & Running the Production Docker Image Locally
+
+```bash
+# 1. Build the production Docker image
+docker build -t resolveit:latest .
+
+# 2. Run the container with environment variables
+docker run -d --name resolveit-container \
+  -p 8080:8080 \
+  -e PORT=8080 \
+  -e DB_HOST=host.docker.internal \
+  -e DB_PORT=3306 \
+  -e DB_NAME=resolveit_db \
+  -e DB_USERNAME=root \
+  -e DB_PASSWORD="your_password" \
+  -e DB_SSL_MODE=false \
+  resolveit:latest
+
+# 3. View container logs
+docker logs -f resolveit-container
+```
+
+---
+
+## Free Cloud Deployment on Render
+
+ResolveIT is fully configured for deployment on **Render** as a **Docker Web Service** connected to an external cloud MySQL database. Render terminates SSL automatically, giving you a public `https://<your-app>.onrender.com` URL accessible from phones, tablets, and desktops.
+
+### Step 1: Create a Free External MySQL Database
+
+Choose any reliable free MySQL cloud provider:
+* **TiDB Cloud (Serverless)**: Free MySQL-compatible serverless database with 5GB storage, public endpoint, and SSL support.
+* **Aiven for MySQL**: Free tier available on cloud regions with automated backups.
+* **Clever Cloud**: Free MySQL add-on (5MB-10MB testing databases).
+* **Railway**: Free starter credits for cloud MySQL.
+
+Note down your connection credentials from your chosen provider:
+* Host (e.g., `gateway01.us-east-1.prod.aws.tidbcloud.com`)
+* Port (e.g., `4000` or `3306`)
+* Database Name (e.g., `resolveit_db` or `test`)
+* Username & Password
+
+### Step 2: Push Repository to GitHub
+
+Ensure all files are committed and push your repository to your GitHub account:
+
+```bash
+git remote add origin https://github.com/<your-username>/resolveit.git
+git branch -M main
+git push -u origin main
+```
+
+*(Note: Secrets and `application-local.properties` are strictly excluded by `.gitignore` and `.dockerignore`)*
+
+### Step 3: Deploy on Render
+
+#### Option A: One-Click Blueprint (Recommended)
+1. In the [Render Dashboard](https://dashboard.render.com), click **New +** → **Blueprint**.
+2. Select your `resolveit` repository. Render will automatically read `render.yaml`.
+3. Provide the database connection details in the prompted Environment Variables (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `DB_SSL_MODE`).
+4. Click **Apply**.
+
+#### Option B: Manual Web Service Setup
+1. In [Render Dashboard](https://dashboard.render.com), click **New +** → **Web Service**.
+2. Connect your GitHub repository.
+3. Configure the service:
+   * **Name**: `resolveit` (or your preferred name)
+   * **Region**: Choose the region closest to your database
+   * **Environment**: `Docker`
+   * **Plan**: `Free`
+4. Add the following **Environment Variables** in the Render settings:
+   * `PORT`: `8080` (Render will map this automatically)
+   * `DB_HOST`: `<your-cloud-db-host>`
+   * `DB_PORT`: `<your-cloud-db-port>`
+   * `DB_NAME`: `<your-cloud-db-name>`
+   * `DB_USERNAME`: `<your-cloud-db-user>`
+   * `DB_PASSWORD`: `<your-cloud-db-password>`
+   * `DB_SSL_MODE`: `true`
+   * `JAVA_OPTS`: `-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0`
+5. Click **Create Web Service**.
+
+Render will clone your repository, build the multi-stage Docker image, start the container, and assign a public HTTPS URL (e.g. `https://resolveit-xxxx.onrender.com`).
+
+### Step 4: Access and Verify
+
+Once Render displays **Live**:
+* Open `https://<your-app>.onrender.com` on any smartphone, tablet, or browser.
+* Log in using the seeded credentials:
+  * **Admin**: `admin` / `Admin@123`
+  * **Support**: `support` / `Support@123`
+  * **Employee**: `employee` / `Employee@123`
+* Access interactive API documentation at: `https://<your-app>.onrender.com/swagger-ui.html`
 
 ---
 
