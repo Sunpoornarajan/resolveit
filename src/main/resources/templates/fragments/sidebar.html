@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<aside th:fragment="sidebar" class="sidebar">
+    <a th:href="@{/}" class="sidebar-brand">
+        <i class="bi bi-shield-check text-primary"></i>
+        <span>Resolve<span class="badge-it">IT</span></span>
+    </a>
+
+    <ul class="sidebar-menu">
+        <!-- ADMIN MENU -->
+        <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/admin/dashboard}" class="nav-link" th:classappend="${#httpServletRequest != null && #httpServletRequest.requestURI == '/admin/dashboard'} ? 'active' : ''">
+                <i class="bi bi-speedometer2"></i>
+                <span>Admin Dashboard</span>
+            </a>
+        </li>
+        <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/admin/incidents}" class="nav-link" th:classappend="${#httpServletRequest != null && #strings.startsWith(#httpServletRequest.requestURI, '/admin/incidents')} ? 'active' : ''">
+                <i class="bi bi-ticket-detailed"></i>
+                <span>All Incidents</span>
+            </a>
+        </li>
+        <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/admin/users}" class="nav-link" th:classappend="${#httpServletRequest != null && #strings.startsWith(#httpServletRequest.requestURI, '/admin/users')} ? 'active' : ''">
+                <i class="bi bi-people"></i>
+                <span>Users</span>
+            </a>
+        </li>
+        <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/admin/departments}" class="nav-link" th:classappend="${#httpServletRequest != null && #strings.startsWith(#httpServletRequest.requestURI, '/admin/departments')} ? 'active' : ''">
+                <i class="bi bi-building"></i>
+                <span>Departments</span>
+            </a>
+        </li>
+        <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/admin/reports}" class="nav-link" th:classappend="${#httpServletRequest != null && #strings.startsWith(#httpServletRequest.requestURI, '/admin/reports')} ? 'active' : ''">
+                <i class="bi bi-bar-chart-line"></i>
+                <span>Reports & Analytics</span>
+            </a>
+        </li>
+
+        <!-- IT SUPPORT MENU -->
+        <li class="nav-item" sec:authorize="hasRole('IT_SUPPORT')">
+            <a th:href="@{/support/dashboard}" class="nav-link" th:classappend="${#httpServletRequest != null && #httpServletRequest.requestURI == '/support/dashboard'} ? 'active' : ''">
+                <i class="bi bi-speedometer2"></i>
+                <span>Support Dashboard</span>
+            </a>
+        </li>
+        <li class="nav-item" sec:authorize="hasRole('IT_SUPPORT')">
+            <a th:href="@{/support/incidents}" class="nav-link" th:classappend="${#httpServletRequest != null && #strings.startsWith(#httpServletRequest.requestURI, '/support/incidents')} ? 'active' : ''">
+                <i class="bi bi-inbox"></i>
+                <span>Assigned Incidents</span>
+            </a>
+        </li>
+
+        <!-- EMPLOYEE MENU -->
+        <li class="nav-item" sec:authorize="hasRole('EMPLOYEE')">
+            <a th:href="@{/employee/dashboard}" class="nav-link" th:classappend="${#httpServletRequest != null && #httpServletRequest.requestURI == '/employee/dashboard'} ? 'active' : ''">
+                <i class="bi bi-speedometer2"></i>
+                <span>My Dashboard</span>
+            </a>
+        </li>
+        <li class="nav-item" sec:authorize="hasRole('EMPLOYEE')">
+            <a th:href="@{/employee/incidents/new}" class="nav-link" th:classappend="${#httpServletRequest != null && #httpServletRequest.requestURI == '/employee/incidents/new'} ? 'active' : ''">
+                <i class="bi bi-plus-circle"></i>
+                <span>Report Incident</span>
+            </a>
+        </li>
+        <li class="nav-item" sec:authorize="hasRole('EMPLOYEE')">
+            <a th:href="@{/employee/incidents}" class="nav-link" th:classappend="${#httpServletRequest != null && #httpServletRequest.requestURI == '/employee/incidents'} ? 'active' : ''">
+                <i class="bi bi-list-check"></i>
+                <span>My Incidents</span>
+            </a>
+        </li>
+
+        <!-- API DOCUMENTATION (SWAGGER) -->
+        <li class="nav-item mt-3">
+            <a th:href="@{/swagger-ui.html}" target="_blank" class="nav-link text-info">
+                <i class="bi bi-journal-code"></i>
+                <span>Swagger REST API</span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-footer">
+        <div>ResolveIT v1.0.0</div>
+        <div class="text-white-50">Enterprise Service Desk</div>
+    </div>
+</aside>
+</body>
+</html>

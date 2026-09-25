@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('Support Incident ' + ${incident.incidentNumber})}"></head>
+<body>
+<div th:replace="~{fragments/layout :: layout(~{::#mainContent}, 'Support Incident Details')}">
+    <div id="mainContent">
+
+        <!-- Top Navigation & Title Bar -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <a th:href="@{/support/incidents}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Queue
+                </a>
+                <h4 class="fw-bold mb-0 text-dark" th:text="${incident.incidentNumber}">INC-100001</h4>
+                <span class="badge" th:classappend="${incident.status.badgeClass}" th:text="${incident.status.displayName}">Status</span>
+                <span class="badge" th:classappend="${incident.priority.badgeClass}" th:text="${incident.priority.displayName}">Priority</span>
+                <span class="badge bg-light text-dark border" th:text="${incident.category.displayName}">Category</span>
+            </div>
+        </div>
+
+        <!-- WORKFLOW ACTIONS ACCORDION / CARD -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-sliders me-2 text-primary"></i>Support Workflow Action</h6>
+            </div>
+            <div class="card-body">
+                <!-- Case 1: ASSIGNED or OPEN -> Can Start Work -->
+                <div th:if="${incident.status.name() == 'ASSIGNED' || incident.status.name() == 'OPEN'}"
+                     class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h6 class="fw-bold mb-1">Ready to investigate?</h6>
+                        <p class="text-muted small mb-0">Change status to <strong>IN PROGRESS</strong> to indicate to the employee that troubleshooting has started.</p>
+                    </div>
+                    <form th:action="@{/support/incidents/{id}/start-work(id=${incident.id})}" method="post">
+                        <button type="submit" class="btn btn-warning btn-sm px-4 fw-bold">
+                            <i class="bi bi-play-circle-fill me-1"></i> Start Work (In Progress)
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Case 2: IN_PROGRESS -> Can Resolve with Resolution Notes -->
+                <div th:if="${incident.status.name() == 'IN_PROGRESS'}">
+                    <h6 class="fw-bold mb-2">Provide Incident Resolution</h6>
+                    <p class="text-muted small mb-3">Record what actions were taken to fix the issue. Resolution notes are required and will be sent to the employee.</p>
+                    <form th:action="@{/support/incidents/{id}/resolve(id=${incident.id})}" th:object="${resolveDto}" method="post">
+                        <div class="mb-3">
+                            <label for="resolutionNotes" class="form-label small fw-semibold">Resolution Notes *</label>
+                            <textarea id="resolutionNotes" th:field="*{resolutionNotes}" class="form-control" rows="3"
+                                      placeholder="Explain the root cause, fix applied, or steps verified (at least 10 characters)..." required></textarea>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('resolutionNotes')}" th:errors="*{resolutionNotes}">Error</div>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-success btn-sm px-4 fw-bold">
+                                <i class="bi bi-check-circle-fill me-1"></i> Resolve Incident
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Case 3: RESOLVED -> Waiting for Employee confirmation -->
+                <div th:if="${incident.status.name() == 'RESOLVED'}" class="alert alert-success d-flex align-items-center mb-0">
+                    <i class="bi bi-check2-all fs-4 me-3"></i>
+                    <div>
+                        <strong>Incident Resolved!</strong> Awaiting confirmation from employee
+                        <span th:text="${incident.createdBy.fullName}">User</span> to confirm resolution and close the ticket.
+                    </div>
+                </div>
+
+                <!-- Case 4: CLOSED -->
+                <div th:if="${incident.status.name() == 'CLOSED'}" class="alert alert-secondary d-flex align-items-center mb-0">
+                    <i class="bi bi-archive fs-4 me-3"></i>
+                    <div>
+                        <strong>Ticket Closed:</strong> This incident has been confirmed resolved and formally closed.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left Column: Details & Comments -->
+            <div class="col-lg-8">
+                <!-- Description Card -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="fw-bold mb-0 text-dark" th:text="${incident.title}">Issue Title</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="text-muted small fw-bold text-uppercase mb-2">Problem Description</h6>
+                        <div class="p-3 bg-light rounded text-dark" style="white-space: pre-wrap;" th:text="${incident.description}">Description text</div>
+                    </div>
+                </div>
+
+                <!-- Resolution Notes Card (if resolved/closed) -->
+                <div class="card border-0 shadow-sm mb-4" th:if="${incident.resolutionNotes != null}">
+                    <div class="card-header bg-success bg-opacity-10 py-3 text-success">
+                        <h6 class="mb-0 fw-bold"><i class="bi bi-check2-circle me-2"></i>Recorded Resolution Notes</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="p-3 bg-light rounded" style="white-space: pre-wrap;" th:text="${incident.resolutionNotes}">Notes</div>
+                    </div>
+                </div>
+
+                <!-- Discussion & Comments -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-bold"><i class="bi bi-chat-left-text me-2 text-primary"></i>Technical Updates & Communication</h6>
+                        <span class="badge bg-secondary" th:text="${#lists.size(comments)} + ' comments'">0</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="comments-list mb-4">
+                            <div class="comment-card" th:each="c : ${comments}">
+                                <div class="comment-header">
+                                    <div>
+                                        <span class="comment-author" th:text="${c.user.fullName}">User Name</span>
+                                        <span class="badge ms-1"
+                                              th:classappend="${c.user.role.name() == 'IT_SUPPORT'} ? 'bg-info text-dark' : (${c.user.role.name() == 'ADMIN'} ? 'bg-danger' : 'bg-secondary')"
+                                              th:text="${c.user.role.displayName}">Role</span>
+                                    </div>
+                                    <span class="comment-time" th:text="${#temporals.format(c.createdAt, 'dd MMM yyyy HH:mm')}">Date</span>
+                                </div>
+                                <div class="text-dark small" style="white-space: pre-wrap;" th:text="${c.commentText}">Comment text</div>
+                            </div>
+
+                            <div th:if="${#lists.isEmpty(comments)}" class="text-muted small text-center py-3">
+                                No comments or updates recorded yet.
+                            </div>
+                        </div>
+
+                        <!-- Add Comment Form -->
+                        <form th:if="${incident.status.name() != 'CLOSED'}"
+                              th:action="@{/support/incidents/{id}/comments(id=${incident.id})}" th:object="${commentDto}" method="post">
+                            <div class="mb-3">
+                                <label for="commentText" class="form-label small fw-semibold">Add Troubleshooting Note or Reply</label>
+                                <textarea id="commentText" th:field="*{commentText}" class="form-control" rows="3"
+                                          placeholder="Type a communication update..." required></textarea>
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-send me-1"></i> Post Update
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Audit Trail -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2 text-primary"></i>Audit Log</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead class="table-light small">
+                                <tr>
+                                    <th class="ps-3">Date</th>
+                                    <th>Action</th>
+                                    <th>Previous</th>
+                                    <th>New Value</th>
+                                    <th>User</th>
+                                </tr>
+                                </thead>
+                                <tbody class="small">
+                                <tr th:each="h : ${incident.histories}">
+                                    <td class="ps-3 text-muted" th:text="${#temporals.format(h.timestamp, 'dd MMM yyyy HH:mm')}">Date</td>
+                                    <td><span class="fw-semibold text-dark" th:text="${h.action.displayName}">Action</span></td>
+                                    <td class="text-muted" th:text="${h.previousValue} ?: '-'">-</td>
+                                    <td class="fw-semibold text-primary" th:text="${h.newValue}">Value</td>
+                                    <td th:text="${h.changedBy.fullName}">User</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Metadata -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0 fw-bold"><i class="bi bi-info-circle me-2 text-primary"></i>Ticket Information</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush small">
+                            <li class="list-group-item d-flex justify-content-between py-2">
+                                <span class="text-muted">Ticket ID:</span>
+                                <span class="fw-bold text-dark" th:text="${incident.incidentNumber}">INC-100001</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between py-2">
+                                <span class="text-muted">Employee:</span>
+                                <span class="fw-semibold text-dark" th:text="${incident.createdBy.fullName}">Employee</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between py-2">
+                                <span class="text-muted">Employee Email:</span>
+                                <span th:text="${incident.createdBy.email}">email@domain.com</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between py-2">
+                                <span class="text-muted">Department:</span>
+                                <span th:text="${incident.department.name}">Finance</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between py-2">
+                                <span class="text-muted">Assigned Engineer:</span>
+                                <span class="fw-semibold" th:if="${incident.assignedTo != null}" th:text="${incident.assignedTo.fullName}">Engineer</span>
+                                <span class="text-muted fst-italic" th:unless="${incident.assignedTo != null}">Unassigned</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between py-2">
+                                <span class="text-muted">Reported Date:</span>
+                                <span th:text="${#temporals.format(incident.createdAt, 'dd MMM yyyy HH:mm')}">Date</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between py-2" th:if="${incident.resolvedAt != null}">
+                                <span class="text-muted">Resolved Date:</span>
+                                <span class="text-success fw-semibold" th:text="${#temporals.format(incident.resolvedAt, 'dd MMM yyyy HH:mm')}">Date</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between py-2" th:if="${incident.closedAt != null}">
+                                <span class="text-muted">Closed Date:</span>
+                                <span class="text-secondary fw-semibold" th:text="${#temporals.format(incident.closedAt, 'dd MMM yyyy HH:mm')}">Date</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

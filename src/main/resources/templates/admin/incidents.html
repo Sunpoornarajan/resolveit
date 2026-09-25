@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('Incident Management')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: layout(~{::#mainContent}, 'Incident Management')}">
+    <div id="mainContent">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold mb-1">All Incidents</h4>
+                <p class="text-muted small mb-0">Search, filter, assign, and track incident tickets across all departments.</p>
+            </div>
+        </div>
+
+        <!-- Filter Card -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-3 bg-white">
+                <form th:action="@{/admin/incidents}" method="get" class="row g-2 align-items-end">
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-muted mb-1">Incident #</label>
+                        <input type="text" name="incidentNumber" class="form-control form-control-sm"
+                               placeholder="e.g. INC-100001" th:value="${filter.incidentNumber}">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-muted mb-1">Keyword</label>
+                        <input type="text" name="keyword" class="form-control form-control-sm"
+                               placeholder="Search title/desc..." th:value="${filter.keyword}">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-muted mb-1">Status</label>
+                        <select name="status" class="form-select form-select-sm">
+                            <option value="">All Statuses</option>
+                            <option th:each="st : ${statuses}" th:value="${st}" th:text="${st.displayName}"
+                                    th:selected="${filter.status == st}">Status</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-muted mb-1">Priority</label>
+                        <select name="priority" class="form-select form-select-sm">
+                            <option value="">All Priorities</option>
+                            <option th:each="pr : ${priorities}" th:value="${pr}" th:text="${pr.displayName}"
+                                    th:selected="${filter.priority == pr}">Priority</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-muted mb-1">Category</label>
+                        <select name="category" class="form-select form-select-sm">
+                            <option value="">All Categories</option>
+                            <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat.displayName}"
+                                    th:selected="${filter.category == cat}">Category</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-muted mb-1">Department</label>
+                        <select name="departmentId" class="form-select form-select-sm">
+                            <option value="">All Departments</option>
+                            <option th:each="dept : ${departments}" th:value="${dept.id}" th:text="${dept.name}"
+                                    th:selected="${filter.departmentId == dept.id}">Department</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold text-muted mb-1">Assigned Support Engineer</label>
+                        <select name="assignedToId" class="form-select form-select-sm">
+                            <option value="">All Engineers</option>
+                            <option th:each="eng : ${supportEngineers}" th:value="${eng.id}" th:text="${eng.fullName}"
+                                    th:selected="${filter.assignedToId == eng.id}">Engineer</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+                            <i class="bi bi-filter me-1"></i> Apply Filters
+                        </button>
+                        <a th:href="@{/admin/incidents}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Incidents Table -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Incident #</th>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Created By</th>
+                            <th>Assigned To</th>
+                            <th>Department</th>
+                            <th>Created Date</th>
+                            <th class="text-end pe-3">Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="inc : ${incidents}">
+                            <td class="ps-3 fw-bold text-primary">
+                                <a th:href="@{/admin/incidents/{id}(id=${inc.id})}" class="text-decoration-none" th:text="${inc.incidentNumber}">INC-100001</a>
+                            </td>
+                            <td class="fw-semibold text-truncate" style="max-width: 220px;" th:text="${inc.title}">VPN issue</td>
+                            <td><span class="badge bg-light text-dark border" th:text="${inc.category.displayName}">Category</span></td>
+                            <td>
+                                <span class="badge" th:classappend="${inc.priority.badgeClass}" th:text="${inc.priority.displayName}">Priority</span>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="${inc.status.badgeClass}" th:text="${inc.status.displayName}">Status</span>
+                            </td>
+                            <td th:text="${inc.createdBy.fullName}">Employee</td>
+                            <td>
+                                <span th:if="${inc.assignedTo != null}" class="badge bg-secondary" th:text="${inc.assignedTo.fullName}">Engineer</span>
+                                <span th:unless="${inc.assignedTo != null}" class="badge bg-light text-muted border">Unassigned</span>
+                            </td>
+                            <td th:text="${inc.department.name}">Finance</td>
+                            <td class="small text-muted" th:text="${#temporals.format(inc.createdAt, 'dd MMM yyyy HH:mm')}">Date</td>
+                            <td class="text-end pe-3">
+                                <a th:href="@{/admin/incidents/{id}(id=${inc.id})}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Manage
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(incidents)}">
+                            <td colspan="10" class="text-center py-5 text-muted">
+                                <i class="bi bi-search display-6 d-block mb-2 text-muted"></i>
+                                No incidents matched your filter criteria.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white border-0 py-3">
+                <div th:replace="~{fragments/pagination :: pagination(${page}, '/admin/incidents')}"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

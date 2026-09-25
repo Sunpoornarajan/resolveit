@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('Reports & Analytics')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: layout(~{::#mainContent}, 'Reports & Analytics')}">
+    <div id="mainContent">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold mb-1">Incident Analytics & Reports</h4>
+                <p class="text-muted small mb-0">Operational breakdowns by status, department, category, and support engineer workload.</p>
+            </div>
+            <div class="badge bg-primary p-2 fs-6">
+                Total System Incidents: <span th:text="${reportStats.totalIncidents}">0</span>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- Incidents by Status -->
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0 fw-bold"><i class="bi bi-pie-chart me-2 text-primary"></i>Incidents by Status</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3" th:each="entry : ${reportStats.incidentsByStatus}">
+                            <div class="d-flex justify-content-between small fw-semibold mb-1">
+                                <span th:text="${entry.key}">Status</span>
+                                <span th:text="${entry.value} + ' (' + (${reportStats.totalIncidents > 0 ? (entry.value * 100 / reportStats.totalIncidents) : 0}) + '%)'">0</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-primary" role="progressbar"
+                                     th:style="'width: ' + (${reportStats.totalIncidents > 0 ? (entry.value * 100 / reportStats.totalIncidents) : 0}) + '%'"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Incidents by Priority -->
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0 fw-bold"><i class="bi bi-flag me-2 text-danger"></i>Incidents by Priority</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3" th:each="entry : ${reportStats.incidentsByPriority}">
+                            <div class="d-flex justify-content-between small fw-semibold mb-1">
+                                <span th:text="${entry.key}">Priority</span>
+                                <span th:text="${entry.value} + ' (' + (${reportStats.totalIncidents > 0 ? (entry.value * 100 / reportStats.totalIncidents) : 0}) + '%)'">0</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar"
+                                     th:classappend="${entry.key == 'Critical'} ? 'bg-danger' : (${entry.key == 'High'} ? 'bg-warning' : (${entry.key == 'Medium'} ? 'bg-primary' : 'bg-secondary'))"
+                                     role="progressbar"
+                                     th:style="'width: ' + (${reportStats.totalIncidents > 0 ? (entry.value * 100 / reportStats.totalIncidents) : 0}) + '%'"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- Incidents by Category -->
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0 fw-bold"><i class="bi bi-tags me-2 text-info"></i>Incidents by Category</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3" th:each="entry : ${reportStats.incidentsByCategory}" th:if="${entry.value > 0}">
+                            <div class="d-flex justify-content-between small fw-semibold mb-1">
+                                <span th:text="${entry.key}">Category</span>
+                                <span class="badge bg-light text-dark border" th:text="${entry.value}">0</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-info" role="progressbar"
+                                     th:style="'width: ' + (${reportStats.totalIncidents > 0 ? (entry.value * 100 / reportStats.totalIncidents) : 0}) + '%'"></div>
+                            </div>
+                        </div>
+                        <div th:if="${#maps.isEmpty(reportStats.incidentsByCategory)}" class="text-muted text-center py-3">No category data available.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Incidents by Department -->
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0 fw-bold"><i class="bi bi-buildings me-2 text-success"></i>Incidents by Department</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3" th:each="entry : ${reportStats.incidentsByDepartment}">
+                            <div class="d-flex justify-content-between small fw-semibold mb-1">
+                                <span th:text="${entry.key}">Department</span>
+                                <span class="badge bg-light text-dark border" th:text="${entry.value}">0</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" role="progressbar"
+                                     th:style="'width: ' + (${reportStats.totalIncidents > 0 ? (entry.value * 100 / reportStats.totalIncidents) : 0}) + '%'"></div>
+                            </div>
+                        </div>
+                        <div th:if="${#maps.isEmpty(reportStats.incidentsByDepartment)}" class="text-muted text-center py-3">No department data available.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workload by Support Engineer & Monthly Distribution -->
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0 fw-bold"><i class="bi bi-headset me-2 text-primary"></i>Workload by Support Engineer</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light small">
+                                <tr>
+                                    <th class="ps-3">Engineer Name</th>
+                                    <th class="text-end pe-3">Assigned Incidents</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="entry : ${reportStats.incidentsByEngineer}">
+                                    <td class="ps-3 fw-semibold text-dark" th:text="${entry.key}">Name</td>
+                                    <td class="text-end pe-3">
+                                        <span class="badge bg-primary" th:text="${entry.value}">0</span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#maps.isEmpty(reportStats.incidentsByEngineer)}">
+                                    <td colspan="2" class="text-center py-3 text-muted">No assignments recorded yet.</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0 fw-bold"><i class="bi bi-calendar3 me-2 text-primary"></i>Monthly Incident Volume</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light small">
+                                <tr>
+                                    <th class="ps-3">Month</th>
+                                    <th class="text-end pe-3">Incidents Created</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="entry : ${reportStats.monthlyIncidentCounts}">
+                                    <td class="ps-3 fw-semibold" th:text="${entry.key}">2026-09</td>
+                                    <td class="text-end pe-3">
+                                        <span class="badge bg-secondary" th:text="${entry.value}">0</span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#maps.isEmpty(reportStats.monthlyIncidentCounts)}">
+                                    <td colspan="2" class="text-center py-3 text-muted">No monthly data available yet.</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('Report an Incident')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: layout(~{::#mainContent}, 'Report an Incident')}">
+    <div id="mainContent">
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-ticket-perforated me-2 text-primary"></i>Submit New IT Support Incident</h5>
+                    </div>
+                    <div class="card-body p-4">
+
+                        <form th:action="@{/employee/incidents/new}" th:object="${incidentDto}" method="post">
+
+                            <div class="mb-3">
+                                <label for="title" class="form-label fw-semibold small">Incident Title *</label>
+                                <input type="text" id="title" th:field="*{title}" class="form-control"
+                                       th:classappend="${#fields.hasErrors('title')} ? 'is-invalid' : ''"
+                                       placeholder="Summary of the issue (e.g. Cannot connect to VPN gateway)" required>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">Error</div>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-4">
+                                    <label for="category" class="form-label fw-semibold small">Category *</label>
+                                    <select id="category" th:field="*{category}" class="form-select" required>
+                                        <option value="">-- Select Category --</option>
+                                        <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat.displayName}">Category</option>
+                                    </select>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('category')}" th:errors="*{category}">Error</div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label for="priority" class="form-label fw-semibold small">Estimated Priority *</label>
+                                    <select id="priority" th:field="*{priority}" class="form-select" required>
+                                        <option th:each="pr : ${priorities}" th:value="${pr}" th:text="${pr.displayName}">Priority</option>
+                                    </select>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('priority')}" th:errors="*{priority}">Error</div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label for="departmentId" class="form-label fw-semibold small">Affected Department *</label>
+                                    <select id="departmentId" th:field="*{departmentId}" class="form-select" required>
+                                        <option value="">-- Select Department --</option>
+                                        <option th:each="dept : ${departments}" th:value="${dept.id}" th:text="${dept.name}">Department</option>
+                                    </select>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('departmentId')}" th:errors="*{departmentId}">Error</div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="description" class="form-label fw-semibold small">Detailed Description *</label>
+                                <textarea id="description" th:field="*{description}" class="form-control" rows="5"
+                                          th:classappend="${#fields.hasErrors('description')} ? 'is-invalid' : ''"
+                                          placeholder="Please describe what happened, steps to reproduce, error codes, and when the issue started..." required></textarea>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">Error</div>
+                                <div class="form-text small">Provide enough detail so IT support engineers can diagnose your issue quickly.</div>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <a th:href="@{/employee/dashboard}" class="btn btn-outline-secondary">Cancel</a>
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="bi bi-send-fill me-1"></i> Submit Incident
+                                </button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

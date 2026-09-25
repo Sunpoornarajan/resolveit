@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: header('Employee Dashboard')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: layout(~{::#mainContent}, 'Employee Dashboard')}">
+    <div id="mainContent">
+
+        <!-- Welcome Banner & Quick Action -->
+        <div class="card border-0 shadow-sm bg-primary text-white mb-4">
+            <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h4 class="fw-bold mb-1">
+                        Welcome, <span th:text="${currentUser.firstName}">Employee</span>!
+                    </h4>
+                    <p class="mb-0 text-white-50">
+                        Need IT assistance or encountered a workstation problem? Submit a support request directly to the IT team.
+                    </p>
+                </div>
+                <a th:href="@{/employee/incidents/new}" class="btn btn-light btn-lg fw-bold text-primary shadow-sm px-4">
+                    <i class="bi bi-plus-circle-fill me-2"></i> Report an Incident
+                </a>
+            </div>
+        </div>
+
+        <!-- Personal Stat Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md">
+                <div class="stat-card">
+                    <div>
+                        <div class="stat-title">My Total</div>
+                        <div class="stat-value" th:text="${stats.myTotalIncidents}">0</div>
+                    </div>
+                    <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-ticket-perforated"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md">
+                <div class="stat-card">
+                    <div>
+                        <div class="stat-title">Open</div>
+                        <div class="stat-value text-info" th:text="${stats.myOpenIncidents}">0</div>
+                    </div>
+                    <div class="stat-icon bg-info bg-opacity-10 text-info">
+                        <i class="bi bi-hourglass"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md">
+                <div class="stat-card">
+                    <div>
+                        <div class="stat-title">In Progress</div>
+                        <div class="stat-value text-warning" th:text="${stats.myInProgressIncidents}">0</div>
+                    </div>
+                    <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-gear-wide-connected"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md">
+                <div class="stat-card">
+                    <div>
+                        <div class="stat-title">Resolved</div>
+                        <div class="stat-value text-success" th:text="${stats.myResolvedIncidents}">0</div>
+                    </div>
+                    <div class="stat-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md">
+                <div class="stat-card">
+                    <div>
+                        <div class="stat-title">Closed</div>
+                        <div class="stat-value text-secondary" th:text="${stats.myClosedIncidents}">0</div>
+                    </div>
+                    <div class="stat-icon bg-secondary bg-opacity-10 text-secondary">
+                        <i class="bi bi-archive"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Incidents Submitted by Employee -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2 text-primary"></i>My Recent Incident Tickets</h6>
+                <a th:href="@{/employee/incidents}" class="btn btn-sm btn-outline-primary">View All My Tickets</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Incident #</th>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Assigned Engineer</th>
+                            <th>Reported Date</th>
+                            <th class="text-end pe-3">Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="inc : ${recentIncidents}">
+                            <td class="ps-3 fw-bold text-primary" th:text="${inc.incidentNumber}">INC-100001</td>
+                            <td class="fw-semibold text-truncate" style="max-width: 280px;" th:text="${inc.title}">Issue title</td>
+                            <td><span class="badge bg-light text-dark border" th:text="${inc.category.displayName}">Category</span></td>
+                            <td>
+                                <span class="badge" th:classappend="${inc.priority.badgeClass}" th:text="${inc.priority.displayName}">Priority</span>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="${inc.status.badgeClass}" th:text="${inc.status.displayName}">Status</span>
+                            </td>
+                            <td>
+                                <span th:if="${inc.assignedTo != null}" class="badge bg-secondary" th:text="${inc.assignedTo.fullName}">Engineer</span>
+                                <span th:unless="${inc.assignedTo != null}" class="text-muted fst-italic">Pending Assignment</span>
+                            </td>
+                            <td class="small text-muted" th:text="${#temporals.format(inc.createdAt, 'dd MMM yyyy HH:mm')}">Date</td>
+                            <td class="text-end pe-3">
+                                <a th:href="@{/employee/incidents/{id}(id=${inc.id})}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View Ticket
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(recentIncidents)}">
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-shield-check display-6 d-block mb-2 text-success"></i>
+                                You currently have no reported incidents. Everything looks good!
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>
