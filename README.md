@@ -4,6 +4,19 @@ ResolveIT is a professional, enterprise-grade IT Service Desk and Incident Manag
 
 ---
 
+## Live Demo
+
+ResolveIT is deployed and publicly accessible:
+
+- **Live Application:** https://resolveit-kihv.onrender.com
+- **Deployment:** Render Docker Web Service
+- **Production Database:** Aiven MySQL
+- **Application Port:** 8080 inside the container
+
+> The production deployment uses environment variables for database connectivity and does not store production database credentials in the repository.
+
+---
+
 ## Architecture Overview
 
 ResolveIT follows a clean, layered Spring Boot architecture with complete separation of concerns:
@@ -19,8 +32,10 @@ Repository Layer (Spring Data JPA, JpaSpecificationExecutor for dynamic filterin
    ↓
 JPA / Hibernate 6
    ↓
-MySQL Relational Database (resolveit_db)
+MySQL Relational Database
 ```
+
+> Local development can use a database such as `resolveit_db`. The verified production deployment uses Aiven MySQL with the production database name configured through environment variables.
 
 - **Zero JavaScript Requirement**: All core application workflows, form submissions, and state transitions are executed via standard server-side rendering (Thymeleaf and Spring MVC).
 - **Security-First**: BCrypt password hashing, session-based authentication, CSRF form protection, and strict role-based authorization filters.
@@ -33,7 +48,8 @@ MySQL Relational Database (resolveit_db)
 - **Platform & Language**: Java 21 LTS
 - **Framework**: Spring Boot 3.4.3
 - **Security**: Spring Security 6 (Session auth, BCrypt, Method Security, CSRF)
-- **Data Persistence**: Spring Data JPA & Hibernate 6 with MySQL 8.0+ / 9.5
+- **Data Persistence**: Spring Data JPA & Hibernate 6 with MySQL 8.0+
+- **Production Database**: Aiven MySQL
 - **Testing**: JUnit 5, Mockito, Spring Boot Test, Spring Security Test, in-memory H2 database
 - **View Engine**: Thymeleaf with `thymeleaf-extras-springsecurity6`
 - **UI Framework**: Bootstrap 5.3 + Bootstrap Icons
@@ -108,6 +124,12 @@ ResolveIT supports standard environment variables for database connectivity and 
 
 *For local developer convenience, an uncommitted `src/main/resources/application-local.properties` file (listed in `.gitignore`) can be used to specify local credentials.*
 
+> **Security & Secret Management**:
+> - `DB_PASSWORD` must never be committed to Git or hardcoded in any configuration file.
+> - `src/main/resources/application-local.properties` remains strictly ignored by Git and Docker.
+> - Production database credentials are supplied exclusively through Render environment variables or secret environment groups.
+> - No passwords, connection URIs with credentials, or cloud secrets are stored in the repository.
+
 ### 2. Running the Application Locally
 
 ```bash
@@ -163,21 +185,33 @@ docker logs -f resolveit-container
 
 ## Free Cloud Deployment on Render
 
-ResolveIT is fully configured for deployment on **Render** as a **Docker Web Service** connected to an external cloud MySQL database. Render terminates SSL automatically, giving you a public `https://<your-app>.onrender.com` URL accessible from phones, tablets, and desktops.
+ResolveIT is configured and successfully deployed on **Render** as a **Docker Web Service**, using **Aiven MySQL** as the external production database.
 
-### Step 1: Create a Free External MySQL Database
+Verified production deployment:
 
-Choose any reliable free MySQL cloud provider:
-* **TiDB Cloud (Serverless)**: Free MySQL-compatible serverless database with 5GB storage, public endpoint, and SSL support.
-* **Aiven for MySQL**: Free tier available on cloud regions with automated backups.
-* **Clever Cloud**: Free MySQL add-on (5MB-10MB testing databases).
-* **Railway**: Free starter credits for cloud MySQL.
+- **Render Service:** `resolveit`
+- **Production URL:** `https://resolveit-kihv.onrender.com`
+- **Container Runtime:** Docker
+- **Application Port:** `8080`
+- **Production Database:** Aiven MySQL
+- **Production Database Name:** `defaultdb`
+- **Database SSL:** Enabled
+
+### Step 1: Create an External MySQL Database
+
+> For the verified ResolveIT deployment, Aiven for MySQL is used as the external production database.
+
+To replicate or set up an external MySQL database, you can provision a managed instance with a cloud provider such as:
+* **Aiven for MySQL**: Cloud MySQL service with automated configuration and SSL support (used for the verified deployment).
+* **TiDB Cloud (Serverless)**: MySQL-compatible serverless database with SSL support.
+* **Clever Cloud**: Cloud MySQL add-on service.
 
 Note down your connection credentials from your chosen provider:
-* Host (e.g., `gateway01.us-east-1.prod.aws.tidbcloud.com`)
-* Port (e.g., `4000` or `3306`)
-* Database Name (e.g., `resolveit_db` or `test`)
+* Host (e.g., your database host domain)
+* Port (e.g., `3306` or provider port)
+* Database Name (e.g., `defaultdb` or `resolveit_db`)
 * Username & Password
+* SSL mode (required for secure remote connections)
 
 ### Step 2: Push Repository to GitHub
 
@@ -218,17 +252,34 @@ git push -u origin main
    * `JAVA_OPTS`: `-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0`
 5. Click **Create Web Service**.
 
-Render will clone your repository, build the multi-stage Docker image, start the container, and assign a public HTTPS URL (e.g. `https://resolveit-xxxx.onrender.com`).
+Render will clone your repository, build the multi-stage Docker image, start the container, and assign a public HTTPS URL (`https://resolveit-kihv.onrender.com`).
 
 ### Step 4: Access and Verify
 
 Once Render displays **Live**:
-* Open `https://<your-app>.onrender.com` on any smartphone, tablet, or browser.
-* Log in using the seeded credentials:
+* Open **`https://resolveit-kihv.onrender.com`** on any smartphone, tablet, or browser.
+* Log in using the seeded demonstration credentials:
   * **Admin**: `admin` / `Admin@123`
   * **Support**: `support` / `Support@123`
   * **Employee**: `employee` / `Employee@123`
-* Access interactive API documentation at: `https://<your-app>.onrender.com/swagger-ui.html`
+
+> These credentials are seeded demonstration accounts intended for portfolio/testing purposes. Production deployments should replace them with secure credentials and appropriate secret management.
+
+* Access interactive API documentation at: **`https://resolveit-kihv.onrender.com/swagger-ui.html`**
+
+### Verified Production Deployment
+
+The production deployment has been successfully verified with:
+
+- Docker image build
+- Spring Boot startup
+- Java 21 runtime
+- Tomcat startup on port 8080
+- Remote MySQL connectivity
+- HikariCP connection pool initialization
+- Hibernate/JPA initialization
+- Database schema initialization
+- Application startup and public Render availability
 
 ---
 
@@ -236,8 +287,13 @@ Once Render displays **Live**:
 
 ResolveIT exposes OpenAPI/Swagger documentation for its REST endpoints:
 
+### Local Development Swagger
 - **Swagger UI**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 - **OpenAPI JSON Docs**: [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+
+### Production Swagger
+- **Swagger UI:** https://resolveit-kihv.onrender.com/swagger-ui.html
+- **OpenAPI JSON:** https://resolveit-kihv.onrender.com/v3/api-docs
 
 ### Key Endpoints:
 - `GET /api/v1/incidents` - Paginated incident search and filtering
